@@ -1,0 +1,62 @@
+<div class="flex items-center justify-center p-8 min-h-[calc(100vh-60px)]" [class]="user()?.bgGradient ? 'bg-gradient-to-r ' + user()?.bgGradient : 'bg-gradient-to-br from-indigo-500 to-purple-600'" [style.font-family]="user()?.fontFamily || 'Inter'">
+  @if (loading()) {
+    <div class="text-white text-xl animate-pulse">Loading...</div>
+  }
+
+  @if (!loading() && !user()) {
+    <div class="text-center text-white">
+      <h1 class="text-2xl font-bold mb-2">User not found</h1>
+      <p class="opacity-80">The profile you're looking for doesn't exist.</p>
+    </div>
+  }
+
+  @if (!loading() && user()) {
+    <div class="w-full max-w-md">
+      <div class="text-center text-white mb-8 animate-fade-in">
+        <div class="w-36 h-36 rounded-full overflow-hidden mx-auto mb-4 border-4 border-white bg-white/20">
+          @if (user()?.image) {
+            <img [src]="user()?.image" [alt]="user()?.name" class="w-full h-full object-cover" />
+          } @else {
+            <div class="w-full h-full flex items-center justify-center text-6xl text-white">
+              {{ user()?.name?.charAt(0) || '?' }}
+            </div>
+          }
+        </div>
+        <h1 class="text-2xl mb-1">{{ user()?.name }}</h1>
+        <p class="opacity-90">@{{ user()?.username }}</p>
+        @if (user()?.description) {
+          <p class="opacity-75 text-sm mt-2">{{ user()?.description }}</p>
+        }
+      </div>
+
+      <!-- Custom links as buttons -->
+      <div class="flex flex-col gap-4">
+        @for (link of customLinks(); track link.id; let i = $index) {
+          <a [href]="link.url" target="_blank" class="block bg-white py-4 px-6 no-underline text-gray-800 shadow-lg hover:-translate-y-0.5 hover:shadow-xl transition animate-slide-in" [class]="getButtonClasses()" [style.animation-delay]="i * 50 + 'ms'" (click)="onLinkClick(link.id)">
+            <div class="font-semibold">{{ link.title }}</div>
+            @if (link.description) {
+              <div class="text-gray-500 text-sm font-normal">{{ link.description }}</div>
+            }
+          </a>
+        }
+      </div>
+
+      <!-- Social links as icons -->
+      @if (socialLinks().length > 0) {
+        <div class="flex justify-center gap-4 mt-8 animate-fade-in">
+          @for (sl of socialLinks(); track sl.id) {
+            <a [href]="sl.url" target="_blank" [attr.aria-label]="sl.platform" class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 hover:scale-110 transition-all">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-white" aria-hidden="true">
+                <path [attr.d]="getSocialIconPath(sl.platform!)" />
+              </svg>
+            </a>
+          }
+        </div>
+      }
+
+      @if (customLinks().length === 0 && socialLinks().length === 0) {
+        <div class="text-white/60 text-center py-4">No links yet</div>
+      }
+    </div>
+  }
+</div>

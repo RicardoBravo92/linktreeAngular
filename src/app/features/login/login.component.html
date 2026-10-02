@@ -1,0 +1,35 @@
+<div class="flex items-center justify-center p-8">
+  <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm">
+    <h1 class="text-center text-gray-800 mb-6">Sign In</h1>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="mb-4">
+        <label for="emailOrUsername" class="block mb-2 text-gray-600 text-sm">Email or Username</label>
+        <input
+          type="text"
+          id="emailOrUsername"
+          formControlName="emailOrUsername"
+          placeholder="your@email.com or your_username"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base box-border focus:outline-none focus:border-purple-600"
+        />
+      </div>
+      <div class="mb-4">
+        <label for="password" class="block mb-2 text-gray-600 text-sm">Password</label>
+        <input
+          type="password"
+          id="password"
+          formControlName="password"
+          placeholder="••••••••"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base box-border focus:outline-none focus:border-purple-600"
+        />
+      </div>
+      <div class="mb-2 text-right text-sm">
+        <a routerLink="/forgot-password" class="text-purple-600 no-underline">Forgot password?</a>
+      </div>
+      @if (error()) {
+        <div class="text-red-600 text-sm mb-4">{{ error() }}</div>
+      }
+      <button type="submit" class="w-full py-2 bg-purple-600 text-white border-none rounded-lg text-base cursor-pointer mt-2 hover:bg-purple-700">Sign In</button>
+    </form>
+    <p class="text-center mt-4 text-gray-500">Don't have an account? <a routerLink="/register" class="text-purple-600 no-underline">Sign up</a></p>
+  </div>
+</div>

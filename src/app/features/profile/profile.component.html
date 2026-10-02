@@ -1,0 +1,141 @@
+<div class="max-w-2xl mx-auto py-8 px-4">
+  <div class="flex gap-2 mb-6">
+    <button class="px-4 py-2 rounded-lg font-medium transition" [class]="activeTab() === 'profile' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'" (click)="setActiveTab('profile')">Profile</button>
+    <button class="px-4 py-2 rounded-lg font-medium transition" [class]="activeTab() === 'theme' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'" (click)="setActiveTab('theme')">Theme</button>
+  </div>
+
+  @if (activeTab() === 'profile') {
+    <div class="bg-white p-8 rounded-xl shadow-md">
+      <div class="flex items-center gap-8 mb-8 max-sm:flex-col max-sm:text-center">
+        <div class="w-30 h-30 rounded-full overflow-hidden bg-gray-200 shrink-0 max-sm:w-24 max-sm:h-24">
+          @if (user()?.image) {
+            <img [src]="user()?.image" alt="Avatar" class="w-full h-full object-cover" />
+          } @else {
+            <div class="w-full h-full flex items-center justify-center text-4xl text-purple-600 bg-purple-100">
+              {{ user()?.name?.charAt(0) || '?' }}
+            </div>
+          }
+        </div>
+        <div class="flex flex-col gap-2 max-sm:items-center">
+          <input type="file" accept="image/*" (change)="onFileSelected($event)" id="fileInput" hidden />
+          <label for="fileInput" class="px-3 py-1 bg-gray-200 text-gray-800 rounded cursor-pointer text-center">Select image</label>
+          <button class="px-3 py-1 bg-purple-600 text-white border-none rounded cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" (click)="uploadAvatar()" [disabled]="!selectedFile()">Upload Avatar</button>
+        </div>
+      </div>
+
+      @if (!editMode()) {
+        <div>
+          <div class="flex justify-between py-3 border-b border-gray-200">
+            <span class="text-gray-500">Name:</span>
+            <span class="text-gray-800 font-medium">{{ user()?.name }}</span>
+          </div>
+          <div class="flex justify-between py-3 border-b border-gray-200">
+            <span class="text-gray-500">Email:</span>
+            <span class="text-gray-800 font-medium">{{ user()?.email }}</span>
+          </div>
+          <div class="flex justify-between py-3 border-b border-gray-200">
+            <span class="text-gray-500">Username:</span>
+            <span class="text-gray-800 font-medium">@{{ user()?.username }}</span>
+          </div>
+          @if (user()?.description) {
+            <div class="flex justify-between py-3 border-b border-gray-200">
+              <span class="text-gray-500">Description:</span>
+              <span class="text-gray-800 font-medium">{{ user()?.description }}</span>
+            </div>
+          }
+          <button class="w-full py-2 bg-blue-500 text-white border-none rounded-lg text-base cursor-pointer mt-4 hover:bg-blue-600 transition" (click)="toggleEdit()">Edit profile</button>
+        </div>
+      } @else {
+        <div [formGroup]="profileForm">
+          <div class="mb-4">
+            <label class="block mb-2 text-gray-600 text-sm">Name</label>
+            <input type="text" formControlName="name" placeholder="Your name" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base box-border focus:outline-none focus:border-purple-600" />
+          </div>
+          <div class="mb-4">
+            <label class="block mb-2 text-gray-600 text-sm">Email</label>
+            <input type="email" formControlName="email" placeholder="your@email.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base box-border focus:outline-none focus:border-purple-600" />
+          </div>
+          <div class="mb-4">
+            <label class="block mb-2 text-gray-600 text-sm">Username</label>
+            <input type="text" formControlName="username" placeholder="your_username" class="w-full px-3 py-2 border rounded-lg text-base box-border focus:outline-none focus:border-purple-600" [class.border-gray-300]="usernameAvailable() === null || profileForm.controls.username.value === user()?.username" [class.border-green-500]="usernameAvailable() === true && profileForm.controls.username.value !== user()?.username" [class.border-red-500]="usernameAvailable() === false && profileForm.controls.username.value !== user()?.username" />
+            @if (profileForm.controls.username.value !== user()?.username) {
+              @if (usernameChecking()) {
+                <p class="text-gray-500 text-xs mt-1">Checking availability...</p>
+              } @else if (usernameAvailable() === true && profileForm.controls.username.value.length >= 3) {
+                <p class="text-green-600 text-xs mt-1">Username is available</p>
+              } @else if (usernameAvailable() === false) {
+                <p class="text-red-600 text-xs mt-1">Username is already taken</p>
+              }
+            }
+          </div>
+          <div class="mb-4">
+            <label class="block mb-2 text-gray-600 text-sm">Description</label>
+            <input type="text" formControlName="description" placeholder="Brief description" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base box-border focus:outline-none focus:border-purple-600" />
+          </div>
+          @if (error()) {
+            <div class="text-red-600 text-sm mt-2">{{ error() }}</div>
+          }
+          <div class="flex gap-2 mt-4">
+            <button class="px-6 py-2 bg-purple-600 text-white border-none rounded-lg cursor-pointer hover:bg-purple-700 transition" (click)="saveProfile()">Save</button>
+            <button class="px-6 py-2 bg-gray-500 text-white border-none rounded-lg cursor-pointer hover:bg-gray-600 transition" (click)="toggleEdit()">Cancel</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (activeTab() === 'theme') {
+    <div class="bg-white p-8 rounded-xl shadow-md">
+      <h2 class="text-lg font-semibold text-gray-800 mb-6">Customize Theme</h2>
+
+      <div class="mb-6">
+        <label class="block mb-3 text-gray-600 text-sm font-medium">Background Gradient</label>
+        <div class="grid grid-cols-4 gap-3 max-sm:grid-cols-2">
+          @for (g of gradients; track g.value) {
+            <button class="h-16 rounded-lg border-3 cursor-pointer transition-all hover:scale-105" [class]="'bg-gradient-to-r ' + g.value" [class.border-purple-600]="theme().bgGradient === g.value" [class.border-transparent]="theme().bgGradient !== g.value" [class.ring-2]="theme().bgGradient === g.value" [class.ring-purple-300]="theme().bgGradient === g.value" (click)="updateThemeProperty('bgGradient', g.value)" [attr.aria-label]="g.label" [attr.aria-pressed]="theme().bgGradient === g.value"></button>
+          }
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block mb-3 text-gray-600 text-sm font-medium">Button Style</label>
+        <div class="flex gap-3">
+          @for (s of buttonStyles; track s.value) {
+            <button class="px-6 py-3 bg-purple-600 text-white border-2 cursor-pointer transition-all hover:bg-purple-700" [class.rounded-lg]="s.value === 'rounded'" [class.rounded-full]="s.value === 'pill'" [class.rounded-none]="s.value === 'square'" [class.border-purple-600]="theme().buttonStyle === s.value" [class.border-transparent]="theme().buttonStyle !== s.value" (click)="updateThemeProperty('buttonStyle', s.value)">{{ s.label }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="block mb-3 text-gray-600 text-sm font-medium">Font Family</label>
+        <select [formControl]="themeFontControl" (change)="onThemeFontChange($any($event.target).value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-purple-600">
+          @for (f of fonts; track f.value) {
+            <option [value]="f.value">{{ f.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="mt-8">
+        <label class="block mb-3 text-gray-600 text-sm font-medium">Preview</label>
+        <div class="w-full max-w-sm mx-auto">
+          <div class="bg-white rounded-3xl p-5 shadow-2xl">
+            <div class="bg-gradient-to-r rounded-2xl py-8 px-4 text-center" [class]="theme().bgGradient">
+              <div class="w-20 h-20 rounded-full bg-white/20 mx-auto mb-4 overflow-hidden">
+                @if (user()?.image) {
+                  <img [src]="user()?.image" class="w-full h-full object-cover" />
+                }
+              </div>
+              <h3 class="text-white mb-4 font-semibold">@{{ user()?.username }}</h3>
+              <div class="bg-white py-3 mb-2 text-gray-800 font-medium shadow-sm text-sm px-4" [class.rounded-lg]="theme().buttonStyle === 'rounded'" [class.rounded-full]="theme().buttonStyle === 'pill'" [class.rounded-none]="theme().buttonStyle === 'square'">Sample Link</div>
+              <div class="bg-white py-3 mb-2 text-gray-800 font-medium shadow-sm text-sm px-4" [class.rounded-lg]="theme().buttonStyle === 'rounded'" [class.rounded-full]="theme().buttonStyle === 'pill'" [class.rounded-none]="theme().buttonStyle === 'square'">Another Link</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="w-full py-3 bg-purple-600 text-white border-none rounded-lg text-base cursor-pointer mt-6 hover:bg-purple-700 transition" (click)="saveTheme()">Save Theme</button>
+    </div>
+  }
+
+  <button class="w-full py-2 bg-emerald-500 text-white border-none rounded-lg text-base cursor-pointer mt-6 hover:bg-emerald-600 transition" (click)="viewPublicProfile()">View my public page</button>
+</div>

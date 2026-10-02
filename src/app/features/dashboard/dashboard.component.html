@@ -1,0 +1,275 @@
+<div class="max-w-6xl mx-auto py-8 px-4">
+  <div class="flex gap-2 mb-6">
+    <button class="px-4 py-2 rounded-lg font-medium transition" [class]="activeTab() === 'links' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'" (click)="setActiveTab('links')">Links</button>
+    <button class="px-4 py-2 rounded-lg font-medium transition" [class]="activeTab() === 'analytics' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'" (click)="setActiveTab('analytics')">Analytics</button>
+    <button class="px-4 py-2 rounded-lg font-medium transition" [class]="activeTab() === 'theme' ? 'bg-purple-600 text-white' : 'bg-gray-200 text-gray-600'" (click)="setActiveTab('theme')">Theme</button>
+  </div>
+
+  <!-- Share Bar -->
+  <div class="flex items-center gap-4 mb-6 bg-white p-4 rounded-xl shadow-md flex-wrap">
+    <button class="px-4 py-2 bg-purple-600 text-white border-none rounded-lg cursor-pointer font-medium hover:bg-purple-700 transition flex items-center gap-2" (click)="toggleShare()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Share
+    </button>
+    <div class="flex-1 min-w-0">
+      <input type="text" [value]="shareUrl()" readonly class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50" />
+    </div>
+    <button class="px-4 py-2 bg-gray-100 text-gray-700 border-none rounded-lg cursor-pointer hover:bg-gray-200 transition" (click)="copyLink()">Copy</button>
+  </div>
+
+  @if (showShare()) {
+    <div class="bg-white p-6 rounded-xl shadow-md mb-6 text-center animate-fade-in">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Your QR Code</h3>
+      @if (qrCodeUrl()) {
+        <img [src]="qrCodeUrl()" alt="QR Code" class="mx-auto mb-4" />
+      }
+      <button class="px-4 py-2 bg-purple-600 text-white border-none rounded-lg cursor-pointer hover:bg-purple-700 transition" (click)="downloadQR()">Download QR</button>
+    </div>
+  }
+
+  @if (activeTab() === 'links') {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Left: Add/Edit Form + Links -->
+      <div>
+        <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+          <h2 class="text-gray-800 text-lg mb-4">{{ editMode() ? 'Edit Link' : 'Add New Link' }}</h2>
+          <div [formGroup]="linkForm">
+            <div class="flex gap-4 max-sm:flex-col mb-3">
+              <input type="url" formControlName="url" (blur)="validateUrl()" placeholder="https://example.com" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-base min-w-0 focus:outline-none focus:border-purple-600 max-sm:w-full" [class.border-red-600]="urlError()" />
+            </div>
+            <div class="mb-3">
+              <select formControlName="platform" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-purple-600">
+                <option value="">Custom link (no platform)</option>
+                @for (p of platforms.slice(1); track p) {
+                  <option [value]="p">{{ p }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-3">
+              <input type="text" formControlName="description" placeholder="Description (optional)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-purple-600" />
+            </div>
+          </div>
+          @if (urlError()) {
+            <div class="text-red-600 text-sm mt-2">{{ urlError() }}</div>
+          }
+          <div class="flex gap-2 mt-4">
+            @if (!editMode()) {
+              <button class="px-6 py-2 bg-purple-600 text-white border-none rounded-lg cursor-pointer hover:bg-purple-700 transition" (click)="addLink()">Add</button>
+            } @else {
+              <button class="px-6 py-2 bg-purple-600 text-white border-none rounded-lg cursor-pointer hover:bg-purple-700 transition" (click)="updateLink()">Save</button>
+              <button class="px-6 py-2 bg-gray-500 text-white border-none rounded-lg cursor-pointer hover:bg-gray-600 transition" (click)="cancelEdit()">Cancel</button>
+            }
+          </div>
+        </div>
+
+        @if (customLinks().length > 0) {
+          <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+            <h2 class="text-gray-800 text-lg mb-4">Custom Links</h2>
+            <div cdkDropList (cdkDropListDropped)="drop($event)">
+              @for (link of customLinks(); track link.id) {
+                <div class="flex items-center p-3 border border-gray-200 rounded-lg mb-2 bg-white cursor-move hover:border-purple-300 hover:shadow-sm transition-all" cdkDrag>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-400 mr-3 shrink-0"><circle cx="9" cy="5" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                  <div class="flex-1 min-w-0">
+                    <span class="font-semibold text-gray-800 block">{{ link.title }}</span>
+                    <a [href]="link.url" target="_blank" class="text-purple-600 text-sm no-underline overflow-hidden text-ellipsis whitespace-nowrap block">{{ link.url }}</a>
+                    @if (link.description) {
+                      <span class="text-gray-400 text-xs block truncate">{{ link.description }}</span>
+                    }
+                  </div>
+                  <span class="text-xs text-gray-400 mr-3 shrink-0">{{ link.clicks }} clicks</span>
+                  <div class="flex gap-2 shrink-0">
+                    <button class="px-3 py-1 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition text-sm" (click)="editLink(link); $event.stopPropagation()">Edit</button>
+                    <button class="px-3 py-1 bg-red-600 text-white border-none rounded cursor-pointer hover:bg-red-700 transition text-sm" (click)="deleteLink(link.id); $event.stopPropagation()">Delete</button>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (socialLinks().length > 0) {
+          <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+            <h2 class="text-gray-800 text-lg mb-4">Social Links</h2>
+            @for (link of socialLinks(); track link.id) {
+              <div class="flex items-center p-3 border border-gray-200 rounded-lg mb-2 bg-white hover:border-purple-300 hover:shadow-sm transition-all">
+                <span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium mr-3 shrink-0">{{ link.platform }}</span>
+                <div class="flex-1 min-w-0">
+                  <span class="font-semibold text-gray-800 block">{{ link.title }}</span>
+                  <a [href]="link.url" target="_blank" class="text-purple-600 text-sm no-underline overflow-hidden text-ellipsis whitespace-nowrap block">{{ link.url }}</a>
+                  @if (link.description) {
+                    <span class="text-gray-400 text-xs block truncate">{{ link.description }}</span>
+                  }
+                </div>
+                <span class="text-xs text-gray-400 mr-3 shrink-0">{{ link.clicks }} clicks</span>
+                <div class="flex gap-2 shrink-0">
+                  <button class="px-3 py-1 bg-blue-500 text-white border-none rounded cursor-pointer hover:bg-blue-600 transition text-sm" (click)="editLink(link)">Edit</button>
+                  <button class="px-3 py-1 bg-red-600 text-white border-none rounded cursor-pointer hover:bg-red-700 transition text-sm" (click)="deleteLink(link.id)">Delete</button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (links().length === 0) {
+          <div class="bg-white p-8 rounded-xl shadow-md text-center">
+            <p class="text-gray-500">You don't have any links yet. Add one above!</p>
+          </div>
+        }
+      </div>
+
+      <!-- Right: Live Preview -->
+      <div class="hidden lg:block">
+        <div class="sticky top-24">
+          <h3 class="text-gray-600 text-sm font-medium mb-3">Live Preview</h3>
+          <div class="w-72 mx-auto bg-white rounded-3xl p-5 shadow-2xl">
+            <div class="bg-gradient-to-r rounded-2xl py-8 px-4 text-center" [class]="theme().bgGradient">
+              <div class="w-20 h-20 rounded-full bg-white/20 mx-auto mb-4 overflow-hidden">
+                @if (user()?.image) {
+                  <img [src]="user()?.image" alt="Profile avatar" class="w-full h-full object-cover" />
+                }
+              </div>
+              <h3 class="text-white mb-1 font-semibold">@{{ user()?.username }}</h3>
+              @if (user()?.description) {
+                <p class="text-white/80 text-xs mb-4">{{ user()?.description }}</p>
+              }
+              @for (link of customLinks(); track link.id; let i = $index) {
+                <div class="bg-white py-3 mb-2 text-gray-800 font-medium shadow-sm text-sm px-4 animate-slide-in" [class.rounded-lg]="theme().buttonStyle === 'rounded'" [class.rounded-full]="theme().buttonStyle === 'pill'" [class.rounded-none]="theme().buttonStyle === 'square'" [style.animation-delay]="i * 50 + 'ms'">
+                  <div class="truncate">{{ link.title }}</div>
+                  @if (link.description) {
+                    <div class="text-gray-400 text-xs font-normal truncate">{{ link.description }}</div>
+                  }
+                </div>
+              } @empty {
+                <div class="text-white/60 text-sm py-4">No links yet</div>
+              }
+              @if (socialLinks().length > 0) {
+                <div class="flex justify-center gap-3 mt-4">
+                  @for (sl of socialLinks(); track sl.id) {
+                    <div class="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center text-white text-xs font-bold">
+                      {{ sl.platform?.charAt(0) }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeTab() === 'theme') {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-xl shadow-md mb-6">
+        <h2 class="text-gray-800 text-lg mb-6">Customize Theme</h2>
+
+        <div class="mb-6">
+          <label class="block mb-3 text-gray-600 text-sm font-medium">Background Gradient</label>
+          <div class="grid grid-cols-4 gap-3 max-sm:grid-cols-2">
+            @for (g of gradients; track g.value) {
+              <button class="h-16 rounded-lg border-3 cursor-pointer transition-all hover:scale-105" [class]="'bg-gradient-to-r ' + g.value" [class.border-purple-600]="theme().bgGradient === g.value" [class.border-transparent]="theme().bgGradient !== g.value" [class.ring-2]="theme().bgGradient === g.value" [class.ring-purple-300]="theme().bgGradient === g.value" (click)="updateThemeProperty('bgGradient', g.value)" [attr.aria-label]="g.label" [attr.aria-pressed]="theme().bgGradient === g.value"></button>
+            }
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <label class="block mb-3 text-gray-600 text-sm font-medium">Button Style</label>
+          <div class="flex gap-3">
+            @for (s of buttonStyles; track s.value) {
+              <button class="px-6 py-3 bg-purple-600 text-white border-2 cursor-pointer transition-all hover:bg-purple-700" [class.rounded-lg]="s.value === 'rounded'" [class.rounded-full]="s.value === 'pill'" [class.rounded-none]="s.value === 'square'" [class.border-purple-600]="theme().buttonStyle === s.value" [class.border-transparent]="theme().buttonStyle !== s.value" (click)="updateThemeProperty('buttonStyle', s.value)">{{ s.label }}</button>
+            }
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <label class="block mb-3 text-gray-600 text-sm font-medium">Font Family</label>
+          <select [formControl]="themeFontControl" (change)="onThemeFontChange($any($event.target).value)" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-base focus:outline-none focus:border-purple-600">
+            @for (f of fonts; track f.value) {
+              <option [value]="f.value">{{ f.label }}</option>
+            }
+          </select>
+        </div>
+
+        <button class="w-full py-3 bg-purple-600 text-white border-none rounded-lg text-base cursor-pointer mt-4 hover:bg-purple-700 transition" (click)="saveTheme()">Save Theme</button>
+      </div>
+
+      <!-- Right: Live Preview (always visible on theme tab) -->
+      <div class="hidden lg:block">
+        <div class="sticky top-24">
+          <h3 class="text-gray-600 text-sm font-medium mb-3">Live Preview</h3>
+          <div class="w-72 mx-auto bg-white rounded-3xl p-5 shadow-2xl">
+            <div class="bg-gradient-to-r rounded-2xl py-8 px-4 text-center" [class]="theme().bgGradient">
+              <div class="w-20 h-20 rounded-full bg-white/20 mx-auto mb-4 overflow-hidden">
+                @if (user()?.image) {
+                  <img [src]="user()?.image" alt="Profile avatar" class="w-full h-full object-cover" />
+                }
+              </div>
+              <h3 class="text-white mb-1 font-semibold">@{{ user()?.username }}</h3>
+              @if (user()?.description) {
+                <p class="text-white/80 text-xs mb-4">{{ user()?.description }}</p>
+              }
+              @for (link of customLinks(); track link.id; let i = $index) {
+                <div class="bg-white py-3 mb-2 text-gray-800 font-medium shadow-sm text-sm px-4 animate-slide-in" [class.rounded-lg]="theme().buttonStyle === 'rounded'" [class.rounded-full]="theme().buttonStyle === 'pill'" [class.rounded-none]="theme().buttonStyle === 'square'" [style.animation-delay]="i * 50 + 'ms'">
+                  <div class="truncate">{{ link.title }}</div>
+                  @if (link.description) {
+                    <div class="text-gray-400 text-xs font-normal truncate">{{ link.description }}</div>
+                  }
+                </div>
+              } @empty {
+                <div class="text-white/60 text-sm py-4">No links yet</div>
+              }
+              @if (socialLinks().length > 0) {
+                <div class="flex justify-center gap-3 mt-4">
+                  @for (sl of socialLinks(); track sl.id) {
+                    <div class="w-8 h-8 rounded-full bg-white/30 flex items-center justify-center text-white text-xs font-bold">
+                      {{ sl.platform?.charAt(0) }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  @if (activeTab() === 'analytics') {
+    <div class="bg-white p-6 rounded-xl shadow-md">
+      <h2 class="text-gray-800 text-lg mb-4">Analytics</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div class="bg-purple-50 p-4 rounded-xl text-center">
+          <div class="text-3xl font-bold text-purple-600">{{ analytics()?.totalClicks || 0 }}</div>
+          <div class="text-gray-500 text-sm">Total Clicks</div>
+        </div>
+        <div class="bg-blue-50 p-4 rounded-xl text-center">
+          <div class="text-3xl font-bold text-blue-600">{{ analytics()?.links?.length || 0 }}</div>
+          <div class="text-gray-500 text-sm">Total Links</div>
+        </div>
+        <div class="bg-green-50 p-4 rounded-xl text-center">
+          <div class="text-3xl font-bold text-green-600">{{ analytics() && links().length > 0 ? (analytics()!.totalClicks / links().length).toFixed(1) : 0 }}</div>
+          <div class="text-gray-500 text-sm">Avg. Clicks/Link</div>
+        </div>
+      </div>
+      <h3 class="text-gray-700 font-medium mb-3">Top Links</h3>
+      <div class="space-y-2">
+        @for (link of analytics()?.links; track link.id) {
+          <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+            <div class="flex-1 min-w-0">
+              <span class="font-medium text-gray-800 block truncate">{{ link.title }}</span>
+              <span class="text-gray-400 text-xs truncate block">{{ link.url }}</span>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              <div class="w-24 bg-gray-200 rounded-full h-2">
+                <div class="bg-purple-600 h-2 rounded-full transition-all" [style.width.%]="analytics() && analytics()!.totalClicks > 0 ? (link.clicks / analytics()!.totalClicks * 100) : 0"></div>
+              </div>
+              <span class="text-sm font-medium text-gray-600 w-16 text-right">{{ link.clicks }} clicks</span>
+            </div>
+          </div>
+        } @empty {
+          <p class="text-gray-400 text-center py-4">No analytics data yet</p>
+        }
+      </div>
+    </div>
+  }
+</div>
