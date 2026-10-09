@@ -7,6 +7,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { Link } from '../../core/models/link.model';
 import { Theme } from '../../core/models/theme.model';
+import { THEME_GRADIENTS, THEME_BUTTON_STYLES, THEME_FONTS, DEFAULT_THEME } from '../../core/config/theme.config';
 
 interface AnalyticsData {
   totalClicks: number;
@@ -42,29 +43,12 @@ export class DashboardComponent implements OnInit {
   customLinks = computed(() => this.links().filter(l => !l.platform));
   socialLinks = computed(() => this.links().filter(l => !!l.platform));
 
-  theme = signal<Theme>({ bgColor: '#6C63FF', bgGradient: 'from-indigo-500 to-purple-600', buttonStyle: 'rounded', fontFamily: 'Inter' });
-  gradients = [
-    { label: 'Indigo to Purple', value: 'from-indigo-500 to-purple-600' },
-    { label: 'Pink to Orange', value: 'from-pink-500 to-orange-400' },
-    { label: 'Teal to Blue', value: 'from-teal-500 to-blue-600' },
-    { label: 'Green to Teal', value: 'from-green-500 to-teal-400' },
-    { label: 'Red to Pink', value: 'from-red-500 to-pink-500' },
-    { label: 'Dark', value: 'from-gray-800 to-gray-900' },
-    { label: 'Sunset', value: 'from-orange-500 to-red-500' },
-    { label: 'Ocean', value: 'from-blue-500 to-cyan-400' },
-  ];
-  buttonStyles = [
-    { label: 'Rounded', value: 'rounded' },
-    { label: 'Pill', value: 'pill' },
-    { label: 'Square', value: 'square' },
-  ];
-  fonts = [
-    { label: 'Inter', value: 'Inter' },
-    { label: 'Poppins', value: 'Poppins' },
-    { label: 'Roboto', value: 'Roboto' },
-    { label: 'Playfair Display', value: 'Playfair Display' },
-    { label: 'Montserrat', value: 'Montserrat' },
-  ];
+  // Shared theme constants (single source of truth)
+  gradients = THEME_GRADIENTS;
+  buttonStyles = THEME_BUTTON_STYLES;
+  fonts = THEME_FONTS;
+
+  theme = signal<Theme>(DEFAULT_THEME);
 
   linkForm = new FormGroup({
     url: new FormControl('', { nonNullable: true }),

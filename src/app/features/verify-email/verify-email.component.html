@@ -1,0 +1,42 @@
+<div class="verify-container">
+  @if (verifying()) {
+    <div class="verify-card">
+      <div class="spinner"></div>
+      <h1>Verifying your email...</h1>
+      <p>Please wait while we verify your email address.</p>
+    </div>
+  }
+
+  @if (success()) {
+    <div class="verify-card success">
+      <div class="icon">✓</div>
+      <h1>Email Verified!</h1>
+      <p>Your email has been successfully verified. You can now sign in to your account.</p>
+      <a routerLink="/login" class="btn-primary">Go to Login</a>
+    </div>
+  }
+
+  @if (error()) {
+    <div class="verify-card error">
+      <div class="icon">✕</div>
+      <h1>Verification Failed</h1>
+      <p>{{ error() }}</p>
+      <div class="actions">
+        <a routerLink="/register" class="btn-primary">Create New Account</a>
+        <a routerLink="/forgot-password" class="btn-secondary">Request New Link</a>
+      </div>
+    </div>
+  }
+
+  @if (invalidToken()) {
+    <div class="verify-card error">
+      <div class="icon">✕</div>
+      <h1>Invalid Link</h1>
+      <p>This verification link is invalid or has expired.</p>
+      <div class="actions">
+        <a routerLink="/register" class="btn-primary">Create New Account</a>
+        <a routerLink="/forgot-password" class="btn-secondary">Request New Link</a>
+      </div>
+    </div>
+  }
+</div>

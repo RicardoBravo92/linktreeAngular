@@ -102,4 +102,8 @@ export class AuthService {
   resetPassword(token: string, newPassword: string) {
     return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, { token, newPassword });
   }
+
+  verifyEmail(token: string) {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/verify-email`, { token });
+  }
 }

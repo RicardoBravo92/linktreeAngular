@@ -5,6 +5,8 @@ import { LinksService } from '../../core/services/links.service';
 import { User } from '../../core/models/user.model';
 import { Link } from '../../core/models/link.model';
 
+const USERNAME_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/;
+
 @Component({
   selector: 'app-public-profile',
   imports: [CommonModule],
@@ -17,6 +19,7 @@ export class PublicProfileComponent implements OnInit {
   user = signal<User | null>(null);
   links = signal<Link[]>([]);
   loading = signal(true);
+  error = signal('');
 
   customLinks = computed(() => this.links().filter(l => !l.platform));
   socialLinks = computed(() => this.links().filter(l => !!l.platform));
@@ -27,11 +30,23 @@ export class PublicProfileComponent implements OnInit {
   ngOnInit() {
     this.route.paramMap.subscribe(params => {
       this.username = params.get('username') || '';
+      this.error.set('');
       this.user.set(null);
       this.links.set([]);
       this.loading.set(true);
+      
+      if (!this.isValidUsername(this.username)) {
+        this.error.set('Invalid username format');
+        this.loading.set(false);
+        return;
+      }
+      
       this.loadProfile();
     });
+  }
+
+  private isValidUsername(username: string): boolean {
+    return USERNAME_REGEX.test(username);
   }
 
   loadProfile() {
@@ -41,8 +56,9 @@ export class PublicProfileComponent implements OnInit {
         this.links.set(data.links);
         this.loading.set(false);
       },
-      error: () => {
+      error: (err) => {
         this.loading.set(false);
+        this.error.set(err?.error?.message || 'Profile not found');
       }
     });
   }
